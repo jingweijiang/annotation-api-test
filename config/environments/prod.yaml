@@ -1,0 +1,178 @@
+# Production Environment Configuration
+
+environment:
+  name: "production"
+  description: "Production environment for critical path testing"
+
+# API Configuration
+api:
+  base_url: "https://api.company.com"
+  version: "v1"
+  timeout: 15  # Shorter timeout for production
+  verify_ssl: true
+  debug: false
+
+# Authentication (production credentials)
+auth:
+  type: "bearer"
+  token: "${PROD_AUTH_TOKEN}"
+  username: "prod_test_user"
+  password: "${PROD_PASSWORD}"
+  client_id: "prod_client"
+  client_secret: "${PROD_CLIENT_SECRET}"
+
+# Database Configuration (read-only access)
+database:
+  host: "db-prod-readonly.company.com"
+  port: 5432
+  name: "api_prod_readonly"
+  username: "readonly_user"
+  password: "${PROD_DB_PASSWORD}"
+  ssl_mode: "require"
+  read_only: true
+
+# Logging (minimal in production)
+logging:
+  level: "WARNING"
+  enable_colors: false
+  file: "logs/prod.log"
+  max_file_size: "50MB"
+  backup_count: 10
+
+# Performance (strict production thresholds)
+performance:
+  threshold_ms: 1000
+  slow_test_threshold_ms: 5000
+  critical_threshold_ms: 2000
+
+# Security (maximum security)
+security:
+  enable_ssl_verification: true
+  strict_mode: true
+  rate_limit:
+    requests_per_minute: 100
+    requests_per_hour: 1000
+  allowed_ips: []  # Restrict to specific IPs if needed
+
+# Test Data (no data creation in production)
+test_data:
+  cleanup_after_test: false  # No cleanup needed, no data created
+  persist_data: false
+  data_source: "readonly"  # Only read existing data
+  create_test_data: false
+
+# Mocking (disabled in production)
+mocking:
+  wiremock:
+    enable: false
+  pact:
+    enable: false
+
+# Monitoring (comprehensive in production)
+monitoring:
+  enable_metrics: true
+  real_time_alerts: true
+  influxdb:
+    enabled: true
+    host: "metrics-prod.company.com"
+    port: 8086
+    database: "api_tests_prod"
+    username: "prod_metrics_user"
+    password: "${INFLUX_PASSWORD_PROD}"
+    ssl: true
+
+# Feature Flags (limited features in production)
+features:
+  enable_performance_monitoring: true
+  enable_security_scanning: false  # Use dedicated security tools
+  enable_contract_testing: false
+  enable_mock_services: false
+  enable_parallel_execution: false  # Sequential for safety
+  enable_auto_retry: false  # Fail fast in production
+
+# Production-specific settings
+production:
+  read_only_mode: true
+  critical_path_only: true
+  minimal_test_suite: true
+  strict_validation: true
+  zero_tolerance_failures: true
+
+# Test Categories (only critical tests in production)
+test_categories:
+  smoke: true
+  unit: false
+  integration: false
+  e2e: false
+  performance: false  # Use dedicated performance monitoring
+  security: false  # Use dedicated security scanning
+  contract: false
+  critical: true  # Production-specific critical tests
+
+# Parallel Execution (disabled for safety)
+parallel:
+  max_workers: 1
+  enable: false
+
+# Retry Configuration (no retries in production)
+retry:
+  max_attempts: 1
+  delay: 0
+  backoff: 1.0
+
+# Cleanup (no cleanup needed)
+cleanup:
+  auto_cleanup: false
+  preserve_on_failure: true
+  cleanup_timeout: 0
+
+# Notifications (immediate alerts for production)
+notifications:
+  enabled: true
+  immediate_alerts: true
+  slack:
+    webhook_url: "${SLACK_WEBHOOK_PROD}"
+    channel: "#api-alerts-prod"
+    username: "API Test Bot - PRODUCTION"
+    notify_on_failure: true
+    notify_on_success: true
+    mention_on_failure: "@channel"
+  email:
+    smtp_server: "smtp.company.com"
+    smtp_port: 587
+    username: "${EMAIL_USERNAME}"
+    password: "${EMAIL_PASSWORD}"
+    recipients:
+      - "devops@company.com"
+      - "qa-lead@company.com"
+      - "engineering-manager@company.com"
+
+# CI/CD Integration
+ci_cd:
+  pipeline_id: "${CI_PIPELINE_ID}"
+  build_number: "${CI_BUILD_NUMBER}"
+  commit_sha: "${CI_COMMIT_SHA}"
+  branch: "${CI_COMMIT_REF_NAME}"
+  deployment_id: "${DEPLOYMENT_ID}"
+
+# Quality Gates (strict in production)
+quality_gates:
+  min_test_coverage: 100  # All critical paths must be covered
+  max_failure_rate: 0  # Zero tolerance for failures
+  max_avg_response_time: 500  # ms
+  min_performance_score: 95
+
+# Compliance and Auditing
+compliance:
+  enable_audit_logging: true
+  audit_log_file: "logs/audit.log"
+  encrypt_logs: true
+  retention_days: 365
+
+# Emergency Procedures
+emergency:
+  circuit_breaker_threshold: 3  # Stop after 3 failures
+  escalation_timeout: 300  # 5 minutes
+  emergency_contacts:
+    - "oncall@company.com"
+    - "+1-555-ONCALL"

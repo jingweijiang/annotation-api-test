@@ -1,0 +1,346 @@
+# GitLab CI/CD Pipeline for API Test Automation Framework
+# Enterprise-grade pipeline with parallel execution, security scanning, and comprehensive reporting
+
+stages:
+  - validate
+  - test
+  - security
+  - performance
+  - report
+  - deploy
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTEST_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pytest"
+  ALLURE_RESULTS_DIR: "reports/allure-results"
+  ALLURE_REPORT_DIR: "reports/allure-report"
+  COVERAGE_REPORT_DIR: "reports/coverage"
+
+# Cache configuration for faster builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip
+    - .cache/pytest
+    - venv/
+
+# Before script to setup environment
+before_script:
+  - python --version
+  - pip install --upgrade pip
+  - python -m venv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
+  - pip install -e .
+
+# Validation Stage
+code_quality:
+  stage: validate
+  script:
+    - source venv/bin/activate
+    - black --check --diff framework/ tests/
+    - isort --check-only --diff framework/ tests/
+    - flake8 framework/ tests/
+    - mypy framework/
+  artifacts:
+    reports:
+      codequality: reports/codequality.json
+    expire_in: 1 week
+  only:
+    - merge_requests
+    - main
+    - develop
+
+security_scan:
+  stage: validate
+  script:
+    - source venv/bin/activate
+    - bandit -r framework/ -f json -o reports/bandit-report.json
+    - safety check --json --output reports/safety-report.json
+  artifacts:
+    reports:
+      sast: reports/bandit-report.json
+    paths:
+      - reports/safety-report.json
+    expire_in: 1 week
+  allow_failure: true
+
+# Test Stages
+unit_tests:
+  stage: test
+  script:
+    - source venv/bin/activate
+    - pytest tests/unit/ 
+      --junitxml=reports/junit/unit-tests.xml
+      --cov=framework
+      --cov-report=xml:reports/coverage/unit-coverage.xml
+      --cov-report=html:reports/coverage/unit-html
+      --alluredir=$ALLURE_RESULTS_DIR/unit
+  artifacts:
+    reports:
+      junit: reports/junit/unit-tests.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: reports/coverage/unit-coverage.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+
+integration_tests:
+  stage: test
+  script:
+    - source venv/bin/activate
+    - pytest tests/integration/ 
+      --env=dev
+      --junitxml=reports/junit/integration-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/integration
+      --maxfail=5
+  artifacts:
+    reports:
+      junit: reports/junit/integration-tests.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+    - merge_requests
+
+api_tests_smoke:
+  stage: test
+  script:
+    - source venv/bin/activate
+    - pytest tests/api/ 
+      -m "smoke"
+      --env=dev
+      --junitxml=reports/junit/smoke-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/smoke
+      --maxfail=3
+  artifacts:
+    reports:
+      junit: reports/junit/smoke-tests.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+
+api_tests_regression:
+  stage: test
+  script:
+    - source venv/bin/activate
+    - pytest tests/api/ 
+      -m "regression"
+      --env=dev
+      --junitxml=reports/junit/regression-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/regression
+      -n auto
+  artifacts:
+    reports:
+      junit: reports/junit/regression-tests.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  parallel:
+    matrix:
+      - TEST_SUITE: ["users", "products", "orders"]
+  only:
+    - main
+    - develop
+
+contract_tests:
+  stage: test
+  script:
+    - source venv/bin/activate
+    - pytest tests/contract/ 
+      --junitxml=reports/junit/contract-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/contract
+  artifacts:
+    reports:
+      junit: reports/junit/contract-tests.xml
+    paths:
+      - reports/
+      - tests/contract/pacts/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+# Security Testing Stage
+security_tests:
+  stage: security
+  script:
+    - source venv/bin/activate
+    - pytest tests/security/ 
+      --env=dev
+      --junitxml=reports/junit/security-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/security
+  artifacts:
+    reports:
+      junit: reports/junit/security-tests.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - main
+    - develop
+
+zap_security_scan:
+  stage: security
+  image: owasp/zap2docker-stable
+  script:
+    - mkdir -p reports/zap
+    - zap-baseline.py -t $API_BASE_URL -J reports/zap/zap-report.json
+  artifacts:
+    paths:
+      - reports/zap/
+    expire_in: 1 week
+  allow_failure: true
+  only:
+    - main
+    - develop
+
+# Performance Testing Stage
+performance_tests:
+  stage: performance
+  script:
+    - source venv/bin/activate
+    - pytest tests/performance/ 
+      --env=staging
+      --junitxml=reports/junit/performance-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/performance
+      --performance-threshold=2000
+  artifacts:
+    reports:
+      junit: reports/junit/performance-tests.xml
+    paths:
+      - reports/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+load_tests:
+  stage: performance
+  script:
+    - source venv/bin/activate
+    - locust --headless --users 50 --spawn-rate 5 --run-time 300s --host $API_BASE_URL -f tests/performance/locustfile.py --html reports/locust/report.html
+  artifacts:
+    paths:
+      - reports/locust/
+    expire_in: 1 week
+  only:
+    - main
+    - develop
+
+# Reporting Stage
+generate_allure_report:
+  stage: report
+  image: frankescobar/allure-docker-service
+  script:
+    - allure generate $ALLURE_RESULTS_DIR --clean -o $ALLURE_REPORT_DIR
+  artifacts:
+    paths:
+      - $ALLURE_REPORT_DIR/
+    expire_in: 1 month
+  dependencies:
+    - unit_tests
+    - integration_tests
+    - api_tests_smoke
+    - api_tests_regression
+    - contract_tests
+    - security_tests
+    - performance_tests
+
+publish_test_results:
+  stage: report
+  script:
+    - source venv/bin/activate
+    - python scripts/ci/publish_results.py
+  dependencies:
+    - generate_allure_report
+  only:
+    - main
+    - develop
+
+# Deployment Stage
+deploy_to_staging:
+  stage: deploy
+  script:
+    - echo "Deploying test framework to staging environment"
+    - rsync -av --delete $ALLURE_REPORT_DIR/ $STAGING_REPORT_SERVER:/var/www/test-reports/
+  environment:
+    name: staging
+    url: https://test-reports-staging.company.com
+  only:
+    - develop
+
+deploy_to_production:
+  stage: deploy
+  script:
+    - echo "Deploying test framework to production environment"
+    - rsync -av --delete $ALLURE_REPORT_DIR/ $PROD_REPORT_SERVER:/var/www/test-reports/
+  environment:
+    name: production
+    url: https://test-reports.company.com
+  when: manual
+  only:
+    - main
+
+# Notification jobs
+notify_slack_success:
+  stage: report
+  script:
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+      --data "{\"text\":\"✅ API Tests Passed - Pipeline $CI_PIPELINE_ID completed successfully\"}" \
+      $SLACK_WEBHOOK_URL
+  when: on_success
+  only:
+    - main
+    - develop
+
+notify_slack_failure:
+  stage: report
+  script:
+    - |
+      curl -X POST -H 'Content-type: application/json' \
+      --data "{\"text\":\"❌ API Tests Failed - Pipeline $CI_PIPELINE_ID failed. Check: $CI_PIPELINE_URL\"}" \
+      $SLACK_WEBHOOK_URL
+  when: on_failure
+  only:
+    - main
+    - develop
+
+# Scheduled jobs for nightly runs
+nightly_full_regression:
+  extends: api_tests_regression
+  script:
+    - source venv/bin/activate
+    - pytest tests/ 
+      --env=staging
+      --junitxml=reports/junit/nightly-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/nightly
+      -n auto
+      --maxfail=10
+  only:
+    - schedules
+  variables:
+    TEST_ENVIRONMENT: "staging"
+
+# Manual jobs
+manual_production_smoke:
+  extends: api_tests_smoke
+  script:
+    - source venv/bin/activate
+    - pytest tests/api/ 
+      -m "smoke and not destructive"
+      --env=prod
+      --junitxml=reports/junit/prod-smoke-tests.xml
+      --alluredir=$ALLURE_RESULTS_DIR/prod-smoke
+  when: manual
+  only:
+    - main
+  variables:
+    TEST_ENVIRONMENT: "production"

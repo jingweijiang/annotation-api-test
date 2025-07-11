@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "User Schema",
+  "description": "Schema for user API responses",
+  "type": "object",
+  "required": [
+    "id",
+    "username",
+    "email",
+    "first_name",
+    "last_name",
+    "status",
+    "created_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique user identifier"
+    },
+    "username": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 50,
+      "pattern": "^[a-zA-Z0-9_]+$",
+      "description": "Unique username"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "description": "User email address"
+    },
+    "first_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "User first name"
+    },
+    "last_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "User last name"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "User full name"
+    },
+    "phone": {
+      "type": ["string", "null"],
+      "description": "User phone number"
+    },
+    "date_of_birth": {
+      "type": ["string", "null"],
+      "format": "date",
+      "description": "User date of birth"
+    },
+    "address": {
+      "type": ["object", "null"],
+      "properties": {
+        "street": {
+          "type": "string",
+          "description": "Street address"
+        },
+        "city": {
+          "type": "string",
+          "description": "City"
+        },
+        "state": {
+          "type": "string",
+          "description": "State or province"
+        },
+        "postal_code": {
+          "type": "string",
+          "description": "Postal code"
+        },
+        "country": {
+          "type": "string",
+          "description": "Country code"
+        }
+      }
+    },
+    "profile": {
+      "type": ["object", "null"],
+      "properties": {
+        "bio": {
+          "type": ["string", "null"],
+          "maxLength": 500,
+          "description": "User biography"
+        },
+        "avatar_url": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "Avatar image URL"
+        },
+        "website": {
+          "type": ["string", "null"],
+          "format": "uri",
+          "description": "Personal website URL"
+        },
+        "social_media": {
+          "type": ["object", "null"],
+          "properties": {
+            "twitter": {
+              "type": ["string", "null"]
+            },
+            "linkedin": {
+              "type": ["string", "null"]
+            },
+            "github": {
+              "type": ["string", "null"]
+            }
+          }
+        }
+      }
+    },
+    "preferences": {
+      "type": ["object", "null"],
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "Preferred language code"
+        },
+        "timezone": {
+          "type": "string",
+          "description": "User timezone"
+        },
+        "notifications": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "boolean"
+            },
+            "sms": {
+              "type": "boolean"
+            },
+            "push": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "inactive", "pending", "suspended"],
+      "description": "User account status"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["user", "admin", "moderator", "guest"],
+      "description": "User role"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Account creation timestamp"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update timestamp"
+    },
+    "last_login": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Last login timestamp"
+    }
+  },
+  "additionalProperties": false
+}

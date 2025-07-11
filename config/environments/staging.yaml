@@ -1,0 +1,145 @@
+# Staging Environment Configuration
+
+environment:
+  name: "staging"
+  description: "Staging environment for pre-production testing"
+
+# API Configuration
+api:
+  base_url: "https://api-staging.company.com"
+  version: "v1"
+  timeout: 30
+  verify_ssl: true
+  debug: false
+
+# Authentication
+auth:
+  type: "bearer"
+  token: "${TEST_AUTH_TOKEN_STAGING}"
+  username: "staging_test_user"
+  password: "${TEST_PASSWORD_STAGING}"
+  client_id: "staging_client"
+  client_secret: "${TEST_CLIENT_SECRET_STAGING}"
+
+# Database Configuration
+database:
+  host: "db-staging.company.com"
+  port: 5432
+  name: "api_test_staging"
+  username: "staging_user"
+  password: "${TEST_DB_PASSWORD_STAGING}"
+  ssl_mode: "require"
+
+# Logging
+logging:
+  level: "INFO"
+  enable_colors: true
+  file: "logs/staging.log"
+
+# Performance (production-like thresholds)
+performance:
+  threshold_ms: 2000
+  slow_test_threshold_ms: 30000
+
+# Security (production-like settings)
+security:
+  enable_ssl_verification: true
+  rate_limit:
+    requests_per_minute: 500
+    requests_per_hour: 5000
+
+# Test Data
+test_data:
+  cleanup_after_test: true
+  persist_data: false
+  data_source: "factory"
+
+# Mocking (limited in staging)
+mocking:
+  wiremock:
+    host: "wiremock-staging.company.com"
+    port: 8080
+    admin_port: 8081
+    enable: false  # Use real services in staging
+  pact:
+    broker_url: "http://pact-broker-staging.company.com"
+    enable: true
+
+# Monitoring
+monitoring:
+  enable_metrics: true
+  influxdb:
+    enabled: true
+    host: "metrics-staging.company.com"
+    port: 8086
+    database: "api_tests_staging"
+    username: "staging_user"
+    password: "${INFLUX_PASSWORD_STAGING}"
+
+# Feature Flags
+features:
+  enable_performance_monitoring: true
+  enable_security_scanning: true
+  enable_contract_testing: true
+  enable_mock_services: false  # Use real services
+  enable_parallel_execution: true
+  enable_auto_retry: true
+
+# Staging-specific settings
+staging:
+  data_refresh_interval: 3600  # 1 hour
+  enable_data_validation: true
+  strict_schema_validation: true
+  enable_performance_baselines: true
+
+# Test Categories (comprehensive testing in staging)
+test_categories:
+  smoke: true
+  unit: true
+  integration: true
+  e2e: true
+  performance: true
+  security: true
+  contract: true
+
+# Parallel Execution (enabled for faster feedback)
+parallel:
+  max_workers: 4
+  enable: true
+  chunk_size: 10
+
+# Retry Configuration (balanced approach)
+retry:
+  max_attempts: 2
+  delay: 1.0
+  backoff: 2.0
+
+# Cleanup (strict cleanup in staging)
+cleanup:
+  auto_cleanup: true
+  preserve_on_failure: false
+  cleanup_timeout: 30
+
+# Notifications (enabled for important failures)
+notifications:
+  enabled: true
+  slack:
+    webhook_url: "${SLACK_WEBHOOK_STAGING}"
+    channel: "#api-tests-staging"
+    username: "API Test Bot - Staging"
+    notify_on_failure: true
+    notify_on_success: false
+
+# CI/CD Integration
+ci_cd:
+  pipeline_id: "${CI_PIPELINE_ID}"
+  build_number: "${CI_BUILD_NUMBER}"
+  commit_sha: "${CI_COMMIT_SHA}"
+  branch: "${CI_COMMIT_REF_NAME}"
+
+# Quality Gates
+quality_gates:
+  min_test_coverage: 90
+  max_failure_rate: 5  # 5%
+  max_avg_response_time: 1500  # ms
+  min_performance_score: 80

@@ -1,0 +1,126 @@
+# Development Environment Configuration
+
+environment:
+  name: "development"
+  description: "Development environment for API testing"
+
+# API Configuration
+api:
+  base_url: "https://api-dev.company.com"
+  version: "v1"
+  timeout: 30
+  verify_ssl: false  # Often self-signed certs in dev
+  debug: true
+
+# Authentication
+auth:
+  type: "bearer"
+  token: "${TEST_AUTH_TOKEN}"  # Set via environment variable
+  username: "test_user"
+  password: "test_password"
+  client_id: "test_client"
+  client_secret: "test_secret"
+
+# Database Configuration
+database:
+  host: "db-dev.company.com"
+  port: 5432
+  name: "api_test_dev"
+  username: "test_user"
+  password: "${TEST_DB_PASSWORD}"
+  ssl_mode: "prefer"
+
+# Logging
+logging:
+  level: "DEBUG"
+  enable_colors: true
+  file: "logs/dev.log"
+
+# Performance (more relaxed in dev)
+performance:
+  threshold_ms: 5000
+  slow_test_threshold_ms: 60000
+
+# Security (relaxed for development)
+security:
+  enable_ssl_verification: false
+  rate_limit:
+    requests_per_minute: 1000
+    requests_per_hour: 10000
+
+# Test Data
+test_data:
+  cleanup_after_test: false  # Keep data for debugging
+  persist_data: true
+  data_source: "factory"  # factory, database, file
+
+# Mocking
+mocking:
+  wiremock:
+    host: "localhost"
+    port: 8080
+    admin_port: 8081
+    enable: true
+  pact:
+    broker_url: "http://pact-broker-dev.company.com"
+    enable: true
+
+# Monitoring
+monitoring:
+  enable_metrics: true
+  influxdb:
+    enabled: true
+    host: "metrics-dev.company.com"
+    port: 8086
+    database: "api_tests_dev"
+    username: "test_user"
+    password: "${INFLUX_PASSWORD}"
+
+# Feature Flags (all enabled in dev)
+features:
+  enable_performance_monitoring: true
+  enable_security_scanning: false  # Disabled in dev to speed up tests
+  enable_contract_testing: true
+  enable_mock_services: true
+  enable_parallel_execution: false  # Easier debugging with sequential
+  enable_auto_retry: true
+
+# Development-specific settings
+development:
+  auto_reload: true
+  debug_mode: true
+  verbose_logging: true
+  preserve_test_data: true
+  enable_test_fixtures: true
+  mock_external_services: true
+
+# Test Categories (what to run in dev)
+test_categories:
+  smoke: true
+  unit: true
+  integration: true
+  e2e: false  # Skip e2e in dev by default
+  performance: false  # Skip performance tests in dev
+  security: false  # Skip security tests in dev
+  contract: true
+
+# Parallel Execution (disabled for easier debugging)
+parallel:
+  max_workers: 1
+  enable: false
+
+# Retry Configuration (more aggressive in dev)
+retry:
+  max_attempts: 1  # Fail fast in dev
+  delay: 0.5
+  backoff: 1.5
+
+# Cleanup (preserve data for debugging)
+cleanup:
+  auto_cleanup: false
+  preserve_on_failure: true
+  cleanup_timeout: 60
+
+# Notifications (disabled in dev)
+notifications:
+  enabled: false
