@@ -150,22 +150,26 @@ class ConfigManager:
         final_key = keys[-1]
         current[final_key] = self._convert_value(value)
         
-    def _convert_value(self, value: str) -> Union[str, int, float, bool]:
+    def _convert_value(self, value: Union[str, int, float, bool]) -> Union[str, int, float, bool]:
         """
-        Convert string value to appropriate type.
-        
+        Convert value to appropriate type.
+
         Args:
-            value: String value to convert
-            
+            value: Value to convert (can be string or already converted type)
+
         Returns:
             Converted value
         """
-        # Boolean conversion
+        # If already a non-string type, return as-is
+        if not isinstance(value, str):
+            return value
+
+        # Boolean conversion for strings
         if value.lower() in ('true', 'yes', '1'):
             return True
         elif value.lower() in ('false', 'no', '0'):
             return False
-            
+
         # Numeric conversion
         try:
             if '.' in value:
@@ -174,7 +178,7 @@ class ConfigManager:
                 return int(value)
         except ValueError:
             pass
-            
+
         # Return as string
         return value
         

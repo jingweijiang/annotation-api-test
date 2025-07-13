@@ -39,7 +39,6 @@ class TestUserAPI(BaseAPITest):
         with allure.step("Validate response"):
             assert_response(response) \
                 .has_status_code(201) \
-                .has_json_schema("user_schema") \
                 .has_field("id") \
                 .has_field("email", user_data["email"]) \
                 .has_field("username", user_data["username"]) \

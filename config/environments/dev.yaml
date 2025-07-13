@@ -6,7 +6,7 @@ environment:
 
 # API Configuration
 api:
-  base_url: "https://api-dev.company.com"
+  base_url: "https://jsonplaceholder.typicode.com"
   version: "v1"
   timeout: 30
   verify_ssl: false  # Often self-signed certs in dev

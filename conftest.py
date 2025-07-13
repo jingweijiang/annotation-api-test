@@ -7,8 +7,13 @@ Provides shared fixtures and configuration for all tests.
 import pytest
 import os
 import sys
+import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+# Suppress SSL warnings for test environments
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Add framework to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -65,18 +70,28 @@ def pytest_addoption(parser):
     )
     
     parser.addoption(
-        "--log-level",
+        "--test-log-level",
         action="store",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Logging level"
+        help="Test framework logging level"
+    )
+
+    parser.addoption(
+        "--fast",
+        action="store_true",
+        default=False,
+        help="Skip slow tests for faster execution"
     )
 
 
 def pytest_configure(config):
     """Configure pytest with custom settings."""
+    # Suppress SSL warnings for test environments
+    warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
+
     # Setup logging
-    log_level = config.getoption("--log-level")
+    log_level = config.getoption("--test-log-level")
     setup_logging(level=log_level, log_file="logs/pytest.log")
     
     # Register custom markers
@@ -112,6 +127,39 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "fast: Tests that complete in under 5 seconds"
+    )
+    config.addinivalue_line(
+        "markers", "positive: Positive test scenarios"
+    )
+    config.addinivalue_line(
+        "markers", "negative: Negative test scenarios"
+    )
+    config.addinivalue_line(
+        "markers", "boundary: Boundary value testing"
+    )
+    config.addinivalue_line(
+        "markers", "critical: Critical path testing"
+    )
+    config.addinivalue_line(
+        "markers", "auth: Authentication and authorization tests"
+    )
+    config.addinivalue_line(
+        "markers", "data: Data validation and transformation tests"
+    )
+    config.addinivalue_line(
+        "markers", "mock: Tests using mock services"
+    )
+    config.addinivalue_line(
+        "markers", "external: Tests requiring external dependencies"
+    )
+    config.addinivalue_line(
+        "markers", "dev: Development environment only"
+    )
+    config.addinivalue_line(
+        "markers", "staging: Staging environment only"
+    )
+    config.addinivalue_line(
+        "markers", "prod: Production environment only"
     )
 
 

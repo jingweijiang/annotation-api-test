@@ -5,29 +5,32 @@ Provides fluent assertion interface for API responses with comprehensive validat
 """
 
 import json
-from typing import Dict, Any, Union, List, Optional
+from typing import Dict, Any, Union, List, Optional, TYPE_CHECKING
 from jsonschema import validate, ValidationError
 import allure
 
-from framework.core.response import APIResponse
-from framework.utils.logger import get_logger
+# 使用TYPE_CHECKING避免循环导入
+if TYPE_CHECKING:
+    from framework.core.response import APIResponse
 
 
 class ResponseAssertion:
     """
     Fluent assertion interface for API responses.
-    
+
     Provides chainable assertions for comprehensive response validation.
     """
-    
-    def __init__(self, response: APIResponse):
+
+    def __init__(self, response: 'APIResponse'):
         """
         Initialize response assertion.
-        
+
         Args:
             response: API response to validate
         """
         self.response = response
+        # 延迟导入logger以避免循环依赖
+        from framework.utils.logger import get_logger
         self.logger = get_logger(self.__class__.__name__)
         
     def has_status_code(self, expected_code: int) -> 'ResponseAssertion':
@@ -370,7 +373,7 @@ class ResponseAssertion:
         return self
 
 
-def assert_response(response: APIResponse) -> ResponseAssertion:
+def assert_response(response: 'APIResponse') -> ResponseAssertion:
     """
     Create fluent assertion interface for API response.
     

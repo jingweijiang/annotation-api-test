@@ -92,12 +92,22 @@ class APIClient:
         
     def _setup_retry_strategy(self, retries: int, backoff_factor: float):
         """Setup retry strategy for the session."""
-        retry_strategy = Retry(
-            total=retries,
-            status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=["HEAD", "GET", "OPTIONS", "POST", "PUT", "DELETE"],
-            backoff_factor=backoff_factor
-        )
+        try:
+            # Try new API first (urllib3 >= 1.26)
+            retry_strategy = Retry(
+                total=retries,
+                status_forcelist=[429, 500, 502, 503, 504],
+                allowed_methods=["HEAD", "GET", "OPTIONS", "POST", "PUT", "DELETE"],
+                backoff_factor=backoff_factor
+            )
+        except TypeError:
+            # Fallback to old API (urllib3 < 1.26)
+            retry_strategy = Retry(
+                total=retries,
+                status_forcelist=[429, 500, 502, 503, 504],
+                method_whitelist=["HEAD", "GET", "OPTIONS", "POST", "PUT", "DELETE"],
+                backoff_factor=backoff_factor
+            )
         
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
